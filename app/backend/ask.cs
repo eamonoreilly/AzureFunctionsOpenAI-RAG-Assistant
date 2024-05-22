@@ -1,11 +1,9 @@
-using System.Net;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.OpenAI.Search;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Identity.Client;
-using Newtonsoft.Json;
 
 namespace sample.demo
 {
@@ -33,13 +31,16 @@ namespace sample.demo
         )
         {
             _logger.LogInformation("Ask function called...");
-            
-            var answer = new AnswerResult(new string[] { }, result.Response, "");
 
-            return new OkObjectResult(answer);
+            var _answer = new answer(new string[] { }, result.Response, "");
 
+            return new OkObjectResult(_answer);
         }
 
-        public record AnswerResult(string[] data_points, string answer, string thoughts);
+        public record answer(
+            [property: JsonPropertyName("data_points")] string[] DataPoints,
+            [property: JsonPropertyName("answer")] string Answer,
+            [property: JsonPropertyName("thoughts")] string Thoughts
+        ) { };
     }
 }

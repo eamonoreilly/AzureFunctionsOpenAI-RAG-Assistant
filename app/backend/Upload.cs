@@ -53,7 +53,11 @@ namespace sample.demo
 
             var result = new UploadResponse("File uploaded successfully", true);
             // Return queue message and response as output
-            return new QueueHttpResponse { QueueMessage = payload, HttpResponse = new OkObjectResult(result) };
+            return new QueueHttpResponse
+            {
+                QueueMessage = payload,
+                HttpResponse = new OkObjectResult(result)
+            };
         }
 
         [Function("EmbedContent")]

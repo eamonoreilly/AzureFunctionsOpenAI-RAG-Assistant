@@ -1,9 +1,9 @@
-using System.Net;
+using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Extensions.OpenAI.Assistants;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace sample.demo
 {
@@ -17,7 +17,7 @@ namespace sample.demo
         }
 
         [Function("chat")]
-        public static async Task<CreateChatBotOutput> CreateAssistant(
+        public static CreateChatBotOutput CreateAssistant(
             [HttpTrigger(AuthorizationLevel.Anonymous, "put", Route = "chat/{assistantId}")]
                 HttpRequestData req,
             string assistantId
@@ -30,24 +30,22 @@ namespace sample.demo
                 Ask for clarification if a user request is ambiguous.
                 """;
 
-            HttpResponseData response = req.CreateResponse();
-
-            await response.WriteAsJsonAsync(responseJson, HttpStatusCode.Created);
-
             return new CreateChatBotOutput
             {
-                HttpResponse = response,
+                HttpResponse = new OkObjectResult(responseJson),
                 ChatBotCreateRequest = new AssistantCreateRequest(assistantId, instructions),
             };
         }
 
         public class PostResponseOutput
         {
-            public HttpResponseData? HttpResponse { get; set; }
+
+            [HttpResult]
+            public IActionResult? HttpResponse { get; set; }
         }
 
         [Function("chatQuery")]
-        public static async Task<PostResponseOutput> ChatQuery(
+        public static PostResponseOutput ChatQuery(
             [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "chat/{assistantId}")]
                 HttpRequestData req,
             string assistantId,
@@ -60,20 +58,17 @@ namespace sample.demo
         )
         {
             // Send response to client in expected format, including assistantId
-            HttpResponseData responseData = req.CreateResponse(HttpStatusCode.OK);
-            var result =
-                "{\"data_points\":[],\"answer\":"
-                + JsonConvert.ToString(
-                    state.RecentMessages.LastOrDefault()?.Content ?? "No response returned."
-                )
-                + ",\"thoughts\":null}";
-            await responseData.WriteAsJsonAsync(result, HttpStatusCode.OK);
+            var _answer = new answer(
+                new string[] { },
+                state.RecentMessages.LastOrDefault()?.Content ?? "No response returned.",
+                ""
+            );
 
-            return new PostResponseOutput { HttpResponse = responseData, };
+            return new PostResponseOutput { HttpResponse = new OkObjectResult(_answer), };
         }
 
         [Function(nameof(GetChatState))]
-        public static async Task<HttpResponseData> GetChatState(
+        public static IActionResult GetChatState(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "chat/{assistantId}")]
                 HttpRequestData req,
             string assistantId,
@@ -81,16 +76,14 @@ namespace sample.demo
                 AssistantState state
         )
         {
-            HttpResponseData response = req.CreateResponse(HttpStatusCode.OK);
             // Returns the last message from the history table which will be the latest answer to the last question
-            var result =
-                "{\"data_points\":[],\"answer\":"
-                + JsonConvert.ToString(
-                    state.RecentMessages.LastOrDefault()?.Content ?? "No response returned."
-                )
-                + ",\"thoughts\":null}";
-            await response.WriteAsJsonAsync(result);
-            return response;
+            var _answer = new answer(
+                new string[] { },
+                state.RecentMessages.LastOrDefault()?.Content ?? "No response returned.",
+                ""
+            );
+
+            return new OkObjectResult(_answer);
         }
 
         public class CreateChatBotOutput
@@ -98,7 +91,14 @@ namespace sample.demo
             [AssistantCreateOutput()]
             public AssistantCreateRequest? ChatBotCreateRequest { get; set; }
 
-            public HttpResponseData? HttpResponse { get; set; }
+            [HttpResult]
+            public IActionResult? HttpResponse { get; set; }
         }
+
+        public record answer(
+            [property: JsonPropertyName("data_points")] string[] DataPoints,
+            [property: JsonPropertyName("answer")] string Answer,
+            [property: JsonPropertyName("thoughts")] string thoughts
+        ) { };
     }
 }
