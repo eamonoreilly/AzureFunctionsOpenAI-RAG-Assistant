@@ -25,6 +25,7 @@ done
 cd ./app/frontend
 SWA_DEPLOYMENT_TOKEN=$(az staticwebapp secrets list --name $AZURE_STATICWEBSITE_NAME --query "properties.apiKey" --output tsv)
 if [[ -n $SWA_DEPLOYMENT_TOKEN ]]; then
+  swa build
   swa deploy --env production --deployment-token $SWA_DEPLOYMENT_TOKEN
 else
   echo "SWA_DEPLOYMENT_TOKEN is empty, not deployoing froentend, check if the static website is created in Azure portal."
