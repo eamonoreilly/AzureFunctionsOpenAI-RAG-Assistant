@@ -65,7 +65,26 @@ export async function chatApi(options: ChatRequest): Promise<AskResponse> {
 export function getCitationFilePath(citation: string): string {
   return `/api/content/${citation}`;
 }
- 
+
+export async function getUserId(): Promise<string> {
+  const response = await fetch('/.auth/me');
+  const payload = await response.json();
+  const {clientPrincipal} = payload;
+  globalThis.assistantId = clientPrincipal.userId;
+
+  // Check if user has chat history
+  const chatHistoryResponse = await fetch('/api/chat/' + globalThis.assistantId + '?timestampUTC=2023-01-01T00:00:00Z', {
+    method: "GET",});
+
+  const chatHistory = await chatHistoryResponse.json();
+
+  // If no chat history, create a new chat
+  if (chatHistory.answer == "No response returned.") {
+    newChat(globalThis.assistantId);
+  }
+  return clientPrincipal.userId
+}
+
 export async function newChat(
   chatId: string
 ): Promise<NewChatResponse> {
@@ -82,6 +101,7 @@ export async function newChat(
   }
   return parsedResponse;
 }
+
 export async function uploadApi(
   request: UploadFileRequest
 ): Promise<UploadFileResponse> {

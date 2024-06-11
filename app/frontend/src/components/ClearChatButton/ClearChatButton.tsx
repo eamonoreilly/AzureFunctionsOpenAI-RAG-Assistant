@@ -16,7 +16,6 @@ declare global{
  
 export const ClearChatButton = ({ className, disabled, onClick }: Props) => {
     const createNewChat = () => {
-        globalThis.assistantId = (Math.floor(Math.random() * 10000000) + 1).toString();
         const value = newChat(globalThis.assistantId);
         }
  

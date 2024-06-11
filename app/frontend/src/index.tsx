@@ -10,12 +10,12 @@ import OneShot from "./pages/oneshot/OneShot";
 import Chat from "./pages/chat/Chat";
 import FileUploader from './pages/uploadfile/FileUploader';
 import NoPage from "./pages/NoPage";
-import { newChat } from "./api"
+import { getUserId, newChat } from "./api"
  
 initializeIcons();
  
-globalThis.assistantId = (Math.floor(Math.random() * 10000000) + 1).toString();
-const value = newChat(globalThis.assistantId);
+// Set current user id
+getUserId();
  
 export default function App() {
   return (
